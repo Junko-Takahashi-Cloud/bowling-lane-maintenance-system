@@ -4,11 +4,12 @@ from typing import Optional, List
 
 from app.database import get_db
 from app import models, schemas
+from app.auth import verify_api_key
 
 router = APIRouter(prefix="/rental_items", tags=["rental_items"])
 
 
-@router.post("", response_model=schemas.RentalItemOut)
+@router.post("", response_model=schemas.RentalItemOut, dependencies=[Depends(verify_api_key)])
 def create_rental_item(item: schemas.RentalItemCreate, db: Session = Depends(get_db)):
     db_item = models.RentalItem(**item.model_dump())
     db.add(db_item)
@@ -39,7 +40,7 @@ def get_rental_item(item_id: int, db: Session = Depends(get_db)):
     return item
 
 
-@router.patch("/{item_id}", response_model=schemas.RentalItemOut)
+@router.patch("/{item_id}", response_model=schemas.RentalItemOut, dependencies=[Depends(verify_api_key)])
 def update_rental_item(item_id: int, item_update: schemas.RentalItemUpdate, db: Session = Depends(get_db)):
     item = db.query(models.RentalItem).filter(models.RentalItem.item_id == item_id).first()
     if not item:
@@ -51,7 +52,7 @@ def update_rental_item(item_id: int, item_update: schemas.RentalItemUpdate, db: 
     return item
 
 
-@router.delete("/{item_id}", response_model=schemas.RentalItemOut)
+@router.delete("/{item_id}", response_model=schemas.RentalItemOut, dependencies=[Depends(verify_api_key)])
 def discard_rental_item(item_id: int, db: Session = Depends(get_db)):
     item = db.query(models.RentalItem).filter(models.RentalItem.item_id == item_id).first()
     if not item:
