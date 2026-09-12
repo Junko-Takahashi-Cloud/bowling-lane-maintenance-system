@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import Optional, List
 
+from app.services.member_gear_client import notify_gear_maintenance_completed
 from app.database import get_db
 from app import models, schemas
 from app.auth import verify_api_key
@@ -48,10 +49,21 @@ def update_maintenance_log(log_id: int, log_update: schemas.MaintenanceLogUpdate
     log = db.query(models.MaintenanceLog).filter(models.MaintenanceLog.log_id == log_id).first()
     if not log:
         raise HTTPException(status_code=404, detail="Maintenance log not found")
+
+    was_completed = log.status == models.MaintenanceStatus.completed
+
     for field, value in log_update.model_dump(exclude_unset=True).items():
         setattr(log, field, value)
     db.commit()
     db.refresh(log)
+
+    if (
+        not was_completed
+        and log.status == models.MaintenanceStatus.completed
+        and log.target_type == models.TargetType.member_gear
+    ):
+        notify_gear_maintenance_completed(log.target_id, log.maintenance_type.value, log.note)
+
     return log
 
 

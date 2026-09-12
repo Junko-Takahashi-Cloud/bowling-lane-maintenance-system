@@ -23,6 +23,7 @@ class TargetType(str, enum.Enum):
     lane = "lane"
     shoe = "shoe"
     ball = "ball"
+    member_gear = "member_gear"  # 追加: 第四弾の会員所有ギア(gears.id)を指す
 
 
 class MaintenanceType(str, enum.Enum):
